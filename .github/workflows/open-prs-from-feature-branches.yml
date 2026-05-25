@@ -1,0 +1,61 @@
+name: Open PRs from feature branches
+
+# Lists all remote feature/* branches and opens a PR to the default branch when missing.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  open-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create missing PRs (feature/* → default branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DEFAULT_BRANCH=$(gh repo view "${GITHUB_REPOSITORY}" --json defaultBranchRef --jq '.defaultBranchRef.name')
+          echo "Default branch: ${DEFAULT_BRANCH}"
+
+          git fetch origin --prune
+
+          mapfile -t branches < <(git branch -r | sed -n 's|^[[:space:]]*origin/\(feature/.*\)|\1|p' | sort -u)
+
+          if [ "${#branches[@]}" -eq 0 ]; then
+            echo "No remote branches matching feature/*"
+            exit 0
+          fi
+
+          for branch in "${branches[@]}"; do
+            [ -n "$branch" ] || continue
+            ref="origin/${branch}"
+
+            # Skip if there is nothing to merge (avoids empty PRs)
+            ahead=$(git rev-list --count "origin/${DEFAULT_BRANCH}..$ref" 2>/dev/null || echo 0)
+            if [ "$ahead" -eq 0 ]; then
+              echo "Skip $branch: no commits ahead of ${DEFAULT_BRANCH}"
+              continue
+            fi
+
+            existing=$(gh pr list --repo "${GITHUB_REPOSITORY}" --base "$DEFAULT_BRANCH" --head "$branch" --state open --json number --jq 'length')
+            if [ "$existing" != "0" ]; then
+              echo "PR already open for $branch"
+              continue
+            fi
+
+            gh pr create \
+              --repo "${GITHUB_REPOSITORY}" \
+              --base "$DEFAULT_BRANCH" \
+              --head "$branch" \
+              --title "Merge ${branch}" \
+              --body "Automatically opened for \`${branch}\` → \`${DEFAULT_BRANCH}\`."
+            echo "Opened PR for $branch"
+          done
