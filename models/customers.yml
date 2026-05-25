@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: customers
+    description: Customer-level model with one row per customer and rollups of their order history.
+    columns:
+      - name: customer_id
+        description: Primary key for the customer.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: first_name
+        description: Customer first name.
+
+      - name: last_name
+        description: Customer last name.
+
+      - name: first_order_date
+        description: Date of the customer's first order.
+
+      - name: most_recent_order_date
+        description: Date of the customer's most recent order.
+
+      - name: number_of_orders
+        description: Total number of orders placed by the customer.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+
