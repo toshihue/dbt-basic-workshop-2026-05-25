@@ -1,0 +1,11 @@
+sources:
+    - name: jaffle_shop
+      description: これはアプリで使用しているPostgresデータベースのレプリカです
+      database: raw
+      schema: jaffle_shop
+      tables:
+          - name: customers
+            description: 顧客ごとに1レコード。
+          - name: orders
+            description: 注文ごとに1レコード。キャンセル済みおよび削除済みの注文を含む。
+            

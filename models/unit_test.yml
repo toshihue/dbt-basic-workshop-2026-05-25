@@ -1,0 +1,41 @@
+unit_tests:
+  - name: test_customers_aggregates_orders_for_existing_customer
+    model: customers
+    given:
+      - input: ref('stg_customers')
+        rows:
+          - {customer_id: 1, first_name: "John", last_name: "Doe"}
+      - input: ref('stg_orders')
+        rows:
+          - {order_id: 1, customer_id: 1, order_date: "2023-01-01"}
+          - {order_id: 2, customer_id: 1, order_date: "2023-06-15"}
+    expect:
+      rows:
+        - {
+            customer_id: 1,
+            first_name: "John",
+            last_name: "Doe",
+            first_order_date: "2023-01-01",
+            most_recent_order_date: "2023-06-15",
+            number_of_orders: 2
+          }
+
+  - name: test_customers_defaults_to_zero_orders_when_no_orders_exist
+    model: customers
+    given:
+      - input: ref('stg_customers')
+        rows:
+          - {customer_id: 1, first_name: "Jane", last_name: "Smith"}
+      - input: ref('stg_orders')
+        rows: []
+    expect:
+      rows:
+        - {
+            customer_id: 1,
+            first_name: "Jane",
+            last_name: "Smith",
+            first_order_date: null,
+            most_recent_order_date: null,
+            number_of_orders: 0
+          }
+          
