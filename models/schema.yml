@@ -1,0 +1,53 @@
+models:
+  - name: customers
+    description: １レコードが１件の顧客を示す
+    columns:
+      - name: customer_id
+        description: 顧客IDを示す主キー
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: 顧客の名
+        data_tests:
+          - not_null
+      - name: last_name
+        description: 顧客の姓
+        data_tests:
+          - not_null
+      - name: first_order_date
+        description: 初回の注文日で、NULLは顧客がまだ注文したことがないを示す
+      - name: most_recent_order_date
+        description: 最新の注文日。NULLは顧客がまだ注文したことがないことを示す。
+      - name: number_of_orders
+        description: 顧客の累計注文件数。注文がない場合はNULL。
+  - name: stg_customers
+    description: このモデルは顧客データをクレンジングする
+    columns:
+      - name: customer_id
+        description: 顧客を一意に識別するID
+        data_tests:
+          - unique
+          - not_null
+  - name: stg_orders
+    description: このモデルは注文データをクレンジングする
+    columns:
+      - name: order_id
+        description: 注文を一意に識別するID
+        data_tests:
+          - unique
+          - not_null
+      - name: status
+        description: 注文のステータス。placed、shipped、completed、return_pending、returnedのいずれか。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['placed', 'shipped', 'completed', 'return_pending', 'returned']
+      - name: customer_id
+        description: 注文した顧客のID。stg_customersのcustomer_idを参照する外部キー。
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
