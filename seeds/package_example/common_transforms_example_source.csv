@@ -1,0 +1,6 @@
+member_id,member_name,email,postal_code,member_code,region_code,order_count,last_login_date,region_unknown_reason
+1,"　山田　　太郎 ",Yamada.TARO@Example.COM," 100-0001 ",ab-001,02,3,2026-08-01,
+2,"  佐藤 花子  ",SATO.hanako@EXAMPLE.co.jp,530-0001,cd-002,04,,2026-07-15,
+3,"  tanaka　ichiro ",tanaka@example.com," 810-0001",ef-003,,7,,ソース地域コード欠損
+4,"   ",suzuki@Example.Com,060-0001,gh-004,01,,,
+5,高橋　次郎,Takahashi@EXAMPLE.COM,"460-0001 ",ij-005,03,12,2026-09-01,

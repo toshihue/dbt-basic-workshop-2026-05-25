@@ -1,0 +1,28 @@
+version: 2
+
+seeds:
+  - name: common_transforms_example_source
+    description: common_transforms の入力境界を確認するために意図的に汚したfixture。
+    config:
+      column_types:
+        member_id: integer
+        member_name: varchar(200)
+        email: varchar(200)
+        postal_code: varchar(20)
+        member_code: varchar(20)
+        region_code: varchar(2)
+        order_count: integer
+        last_login_date: date
+        region_unknown_reason: varchar(200)
+    columns:
+      - name: member_id
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              description: >
+                zero_padで値が切り捨てられないよう、変換前のmember_idが
+                4桁の範囲内であることを検証する。
+              arguments:
+                min_value: 0
+                max_value: 9999

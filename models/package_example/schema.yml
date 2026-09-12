@@ -1,0 +1,139 @@
+version: 2
+
+models:
+  - name: common_transforms_example
+    description: >
+      common_transforms v1.2.0 の integration_tests を利用側向けにしたサンプル。
+      dbt.concat と dbt_expectations の文字列長テストも組み合わせる。
+    columns:
+      - name: member_id
+        description: 主キー。
+        data_tests:
+          - unique
+          - not_null
+
+      - name: padded_member_id
+        description: zero_pad で member_id を4桁に0埋めした値。
+        data_tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              description: >
+                zero_pad の出力形式が全行で4文字に統一されていることを検証する。
+                変換前の値が4桁以内であることと切り捨て防止は、入力seedの
+                member_id に設定した accepted_range が保証する。
+              arguments:
+                value: 4
+
+      - name: member_name
+        description: >
+          空白を正規化して initcap を適用した氏名。空白だけの入力は
+          normalize_text によって意図的にNULLとなるため、not_nullテストは設定しない。
+
+      - name: email
+        description: 小文字に統一したメールアドレス。
+        data_tests:
+          - not_null
+
+      - name: member_code
+        description: 大文字に統一した会員コード。
+        data_tests:
+          - unique
+          - not_null
+
+      - name: member_reference
+        description: dbt.concat で member_code、ハイフン、padded_member_id を結合した値。
+        data_tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              description: >
+                member_reference が「6文字の会員コード + ハイフン + 4桁ID」の
+                11文字であることを検証する。失敗した場合は、member_code の桁数、
+                padded_member_id の0埋め、または dbt.concat の結合形式を確認する。
+              arguments:
+                value: 11
+
+      - name: postal_code
+        description: 前後の空白を除去した郵便番号。
+
+      - name: region_code
+        description: NULL を不明コード99で補完した地域コード。
+        data_tests:
+          - not_null
+          - common_transforms.placeholder_requires_reason:
+              description: >
+                region_code が不明コード '99' の行では、region_unknown_reason に
+                NULL、空文字、空白だけの値を許可しない。欠損をプレースホルダで
+                補完した事実だけでなく、その理由を下流で追跡できることを保証する。
+              arguments:
+                placeholder: '99'
+                reason_column: region_unknown_reason
+
+      - name: region_unknown_reason
+        description: 地域コードを不明コード99に補完した理由。
+
+      - name: order_count
+
+        description: NULL を0で補完した注文件数。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              description: >
+                common_transforms_example が出力する注文件数が0以上であることを検証する。
+                fill_null はNULLを0へ補完する一方、元データの負数はそのまま残すため、
+                不正な件数が下流へ流れることをこのテストで防ぐ。
+              arguments:
+                min_value: 0
+
+      - name: is_last_login_date_unknown
+        description: >
+          last_login_dateを既定日で補完する前に、元データがNULLだったかを示すフラグ。
+          trueの場合、1900-01-01は実際のログイン日ではなく欠損補完値である。
+        data_tests:
+          - not_null
+
+      - name: last_login_date
+        description: NULL を既定のepoch日で補完した最終ログイン日。
+        data_tests:
+          - not_null
+
+      - name: source_system_code
+        description: constant で付与した単一定数。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['DEMO01']
+
+      - name: system_code
+        description: standard_constants で付与したシステムコード。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['DEMO01']
+
+      - name: record_type
+        description: standard_constants で付与したレコード種別。
+
+      - name: created_by
+        description: standard_constants で付与した作成者。
+
+      - name: dbt_loaded_at
+        description: モデルを実行した日時。
+        data_tests:
+          - not_null
+
+      - name: dbt_invocation_id
+        description: dbt 実行単位の識別子。
+        data_tests:
+          - not_null
+
+      - name: dbt_target_name
+        description: 実行時の dbt ターゲット名。
+        data_tests:
+          - not_null
+
+      - name: dbt_target_schema
+        description: モデルの出力先スキーマ。
+        data_tests:
+          - not_null
